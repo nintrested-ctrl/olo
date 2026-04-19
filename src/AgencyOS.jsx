@@ -44,6 +44,7 @@ State-specific protocols:
 Never use bullet points. Never exceed 4 labelled lines. Never say "I understand." You are a system, not a therapist.`;
 
 export default function AgencyOS() {
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem("anthropic_api_key") || "");
   const [selectedState, setSelectedState] = useState(null);
   const [task, setTask] = useState("");
   const [response, setResponse] = useState("");
@@ -59,7 +60,7 @@ export default function AgencyOS() {
   };
 
   const handleActivate = async () => {
-    if (!selectedState || !task.trim() || loading) return;
+    if (!apiKey.trim() || !selectedState || !task.trim() || loading) return;
 
     const now = Date.now();
     const responseLatency = Math.round((now - resistanceStart.current) / 1000);
@@ -77,7 +78,11 @@ Activate protocol.`;
     try {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey.trim(),
+          "anthropic-version": "2023-06-01",
+        },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
           max_tokens: 1000,
@@ -85,6 +90,10 @@ Activate protocol.`;
           messages: [{ role: "user", content: userMessage }],
         }),
       });
+
+      if (!res.ok) {
+        throw new Error(`Anthropic API returned ${res.status}`);
+      }
 
       const data = await res.json();
       const text = data.content?.[0]?.text || "SYSTEM ERROR. Close this. Open your task. Work for 2 minutes.";
@@ -101,6 +110,12 @@ Activate protocol.`;
 
     setLoading(false);
     resistanceStart.current = Date.now();
+  };
+
+  const handleApiKeyChange = (event) => {
+    const next = event.target.value;
+    setApiKey(next);
+    localStorage.setItem("anthropic_api_key", next);
   };
 
   const handleReset = () => {
@@ -208,6 +223,33 @@ Activate protocol.`;
       {/* Phase 1: Detect + Input */}
       {phase !== "directive" && (
         <>
+          {/* API key */}
+          <div style={{ marginBottom: "1.25rem" }}>
+            <div
+              style={{
+                fontSize: "10px",
+                color: "var(--color-text-tertiary)",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                marginBottom: "10px",
+              }}
+            >
+              00 — Anthropic API key
+            </div>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={handleApiKeyChange}
+              placeholder="sk-ant-..."
+              style={{
+                width: "100%",
+                fontFamily: "var(--font-mono)",
+                fontSize: "14px",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+
           {/* State detection */}
           <div style={{ marginBottom: "1.25rem" }}>
             <div
@@ -293,7 +335,7 @@ Activate protocol.`;
           {/* Activate */}
           <button
             onClick={handleActivate}
-            disabled={!selectedState || !task.trim() || loading}
+            disabled={!apiKey.trim() || !selectedState || !task.trim() || loading}
             style={{
               width: "100%",
               padding: "13px",
@@ -302,18 +344,18 @@ Activate protocol.`;
               letterSpacing: "0.1em",
               textTransform: "uppercase",
               border:
-                !selectedState || !task.trim()
+                !apiKey.trim() || !selectedState || !task.trim()
                   ? "0.5px solid var(--color-border-tertiary)"
                   : "0.5px solid var(--color-border-secondary)",
               borderRadius: "var(--border-radius-md)",
               background: "transparent",
               color:
-                !selectedState || !task.trim()
+                !apiKey.trim() || !selectedState || !task.trim()
                   ? "var(--color-text-tertiary)"
                   : loading
                     ? "var(--color-text-secondary)"
                     : "var(--color-text-primary)",
-              cursor: !selectedState || !task.trim() || loading ? "default" : "pointer",
+              cursor: !apiKey.trim() || !selectedState || !task.trim() || loading ? "default" : "pointer",
               marginBottom: "1.5rem",
             }}
           >

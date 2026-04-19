@@ -1,0 +1,64 @@
+:root {
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --color-background-primary: #0e0f12;
+  --color-background-secondary: #151821;
+  --color-background-warning: #2a2317;
+  --color-background-danger: #231718;
+
+  --color-text-primary: #f7f8fa;
+  --color-text-secondary: #d1d5de;
+  --color-text-tertiary: #848b99;
+  --color-text-warning: #e5b567;
+  --color-text-danger: #f38ba0;
+  --color-text-success: #95d6a4;
+
+  --color-border-primary: #c5cad5;
+  --color-border-secondary: #4a5263;
+  --color-border-tertiary: #333947;
+  --color-border-warning: #b98936;
+  --color-border-danger: #bd5a6f;
+
+  --border-radius-md: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+input {
+  border: 0.5px solid var(--color-border-secondary);
+  border-radius: var(--border-radius-md);
+  background: var(--color-background-secondary);
+  color: var(--color-text-primary);
+  padding: 0.75rem;
+}
+
+input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
