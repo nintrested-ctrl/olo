@@ -1,0 +1,1167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TimeTrack v2.20 — Windows Screen-Time Tracker</title>
+  <meta name="description" content="TimeTrack is a Windows screen-time tracker for apps, browser activity, idle time, focus sessions, notes, categories, and reports." />
+  <style>
+    :root {
+      --bg: #06101f;
+      --bg2: #0a1628;
+      --panel: rgba(13, 25, 43, .84);
+      --panel2: rgba(18, 34, 56, .74);
+      --text: #f4f8ff;
+      --muted: #aebbd0;
+      --soft: #74869f;
+      --line: rgba(135, 185, 255, .18);
+      --line2: rgba(135, 185, 255, .10);
+      --blue: #47a3ff;
+      --cyan: #69f0ff;
+      --cyan2: #a8f8ff;
+      --shadow: 0 30px 90px rgba(0,0,0,.42);
+      --radius: 28px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 18% 5%, rgba(63, 168, 255, .18), transparent 34%),
+        radial-gradient(circle at 82% 14%, rgba(105, 240, 255, .12), transparent 30%),
+        linear-gradient(180deg, #050b16 0%, #06101f 48%, #050b16 100%);
+      letter-spacing: -.015em;
+    }
+
+    a { color: inherit; }
+    .page { overflow: hidden; }
+    .wrap { width: min(1180px, calc(100% - 44px)); margin: 0 auto; }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(18px);
+      background: rgba(5, 11, 22, .74);
+      border-bottom: 1px solid var(--line2);
+    }
+    .nav-inner {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      font-size: 18px;
+    }
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #20c6ff, #1264ff);
+      box-shadow: 0 16px 36px rgba(24, 105, 255, .32);
+      border: 1px solid rgba(255,255,255,.18);
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 750;
+      padding: 10px 12px;
+      border-radius: 999px;
+    }
+    .nav-links a:hover { background: rgba(255,255,255,.06); color: var(--text); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 13px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: linear-gradient(135deg, #35a8ff, #6df1ff);
+      color: #03101f;
+      font-weight: 950;
+      text-decoration: none;
+      box-shadow: 0 18px 38px rgba(51, 169, 255, .24);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn.secondary {
+      color: var(--text);
+      background: rgba(255,255,255,.055);
+      border: 1px solid var(--line);
+      box-shadow: none;
+    }
+    .btn.disabled {
+      color: rgba(244,248,255,.62);
+      background: rgba(255,255,255,.035);
+      border: 1px dashed rgba(135,185,255,.28);
+      box-shadow: none;
+      pointer-events: none;
+      cursor: default;
+    }
+
+    .hero {
+      padding: 76px 0 52px;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.02fr .98fr;
+      gap: 34px;
+      align-items: center;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(71, 163, 255, .12);
+      border: 1px solid rgba(105, 240, 255, .18);
+      color: var(--cyan2);
+      font-size: 13px;
+      font-weight: 850;
+      letter-spacing: .02em;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 99px;
+      background: var(--cyan);
+      box-shadow: 0 0 18px var(--cyan);
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(44px, 7vw, 82px);
+      line-height: .95;
+      letter-spacing: -.07em;
+      max-width: 780px;
+    }
+    .grad {
+      background: linear-gradient(90deg, #fff, #a8f8ff 55%, #48a8ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .lead {
+      margin: 22px 0 0;
+      max-width: 670px;
+      color: var(--muted);
+      font-size: clamp(17px, 2vw, 21px);
+      line-height: 1.65;
+      letter-spacing: -.02em;
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 30px;
+    }
+    .meta-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 22px;
+      color: rgba(244,248,255,.72);
+    }
+    .meta-pill {
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.035);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .hero-card {
+      border-radius: 34px;
+      background: linear-gradient(180deg, rgba(20,38,64,.84), rgba(8,18,34,.9));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      inset: -80px -70px auto auto;
+      width: 230px;
+      height: 230px;
+      border-radius: 50%;
+      background: rgba(105,240,255,.16);
+      filter: blur(22px);
+    }
+
+    .app-window {
+      position: relative;
+      border-radius: 26px;
+      overflow: hidden;
+      border: 1px solid rgba(135,185,255,.18);
+      background: #07111f;
+    }
+    .window-bar {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(135,185,255,.12);
+      background: rgba(255,255,255,.04);
+    }
+    .dot { width: 10px; height: 10px; border-radius: 99px; display:inline-block; }
+    .red { background:#ff5f57; } .yellow { background:#ffbd2e; } .green { background:#28c840; }
+    .window-name {
+      margin-left: 8px;
+      color: rgba(244,248,255,.68);
+      font-weight: 850;
+      font-size: 13px;
+    }
+    .app-body { padding: 26px; }
+    .app-head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .app-icon {
+      width: 68px;
+      height: 68px;
+      border-radius: 21px;
+      display:grid;
+      place-items:center;
+      font-size: 31px;
+      background: linear-gradient(135deg, #22c4ff, #1165ff);
+      box-shadow: 0 20px 40px rgba(24,105,255,.32);
+    }
+    .app-title { font-size: 24px; font-weight: 950; }
+    .app-sub { color: var(--soft); font-size: 13px; margin-top: 3px; font-weight: 650; }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .kpi {
+      border: 1px solid rgba(135,185,255,.15);
+      background: rgba(255,255,255,.035);
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .kpi b { display:block; font-size: 24px; letter-spacing:-.04em; }
+    .kpi span { color: var(--soft); font-weight: 700; font-size: 12px; }
+    .bar-list { margin-top: 24px; }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 120px 1fr 44px;
+      gap: 12px;
+      align-items: center;
+      margin: 13px 0;
+      font-size: 13px;
+      color: rgba(244,248,255,.76);
+      font-weight: 750;
+    }
+    .bar-track {
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #36a8ff, #75f2ff);
+    }
+
+    .section {
+      padding: 58px 0;
+    }
+    .section-head {
+      display: grid;
+      grid-template-columns: .82fr 1.18fr;
+      gap: 28px;
+      align-items: end;
+      margin-bottom: 22px;
+    }
+    h2 {
+      margin: 0;
+      font-size: clamp(32px, 4.8vw, 58px);
+      line-height: 1;
+      letter-spacing: -.055em;
+    }
+    .section-lead {
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.65;
+      margin: 0;
+      max-width: 720px;
+    }
+
+    .features-layout {
+      display: grid;
+      grid-template-columns: .8fr 1.2fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+    .feature-intro {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(13,25,43,.86), rgba(10,20,36,.82));
+      border-radius: var(--radius);
+      padding: 28px;
+      min-height: 100%;
+      box-shadow: 0 20px 70px rgba(0,0,0,.22);
+    }
+    .feature-intro h3 {
+      margin: 0;
+      font-size: 30px;
+      letter-spacing: -.04em;
+    }
+    .feature-intro p {
+      margin: 14px 0 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 15px;
+      font-weight: 650;
+    }
+    .mini-stack {
+      display: grid;
+      gap: 10px;
+      margin-top: 24px;
+    }
+    .mini-stack span {
+      display:flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 13px;
+      border-radius: 16px;
+      border: 1px solid rgba(135,185,255,.14);
+      background: rgba(255,255,255,.035);
+      color: rgba(244,248,255,.82);
+      font-size: 13px;
+      font-weight: 850;
+    }
+    .mini-stack small { color: var(--cyan2); font-weight: 900; }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 12px;
+    }
+    .feature-card {
+      min-height: 152px;
+      padding: 18px;
+      border: 1px solid rgba(135,185,255,.16);
+      background: rgba(13,25,43,.72);
+      border-radius: 22px;
+      box-shadow: 0 16px 50px rgba(0,0,0,.18);
+    }
+    .feature-num {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display:grid;
+      place-items:center;
+      background: rgba(71,163,255,.16);
+      color: var(--cyan2);
+      font-weight: 950;
+      font-size: 12px;
+      margin-bottom: 14px;
+    }
+    .feature-card b {
+      display:block;
+      font-size: 16px;
+      margin-bottom: 7px;
+      letter-spacing: -.025em;
+    }
+    .feature-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+      font-weight: 620;
+    }
+
+    .preview-grid {
+      display:grid;
+      grid-template-columns: 1.04fr .96fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+    .preview-large, .preview-stack-card {
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: linear-gradient(180deg, rgba(13,25,43,.86), rgba(8,18,34,.88));
+      box-shadow: 0 26px 80px rgba(0,0,0,.26);
+      overflow: hidden;
+    }
+    .preview-large .app-body { padding: 22px; }
+    .preview-stack {
+      display:grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 18px;
+    }
+    .preview-stack-card { padding: 0; }
+    .table-mock {
+      border: 1px solid rgba(135,185,255,.15);
+      border-radius: 18px;
+      overflow: hidden;
+      margin-top: 16px;
+      font-size: 13px;
+    }
+    .t-row {
+      display:grid;
+      grid-template-columns: 1.3fr .62fr .62fr;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(135,185,255,.08);
+      color: rgba(244,248,255,.76);
+      font-weight: 700;
+    }
+    .t-head {
+      background: rgba(71,163,255,.10);
+      color: #aeefff;
+      font-weight: 950;
+    }
+    .t-row:last-child { border-bottom: 0; }
+    .tag-row {
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top: 15px;
+    }
+    .tag {
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: rgba(71,163,255,.12);
+      border: 1px solid rgba(135,185,255,.18);
+      color: #d8f7ff;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .focus-time {
+      font-size: clamp(46px, 6vw, 78px);
+      line-height: .95;
+      margin: 14px 0 16px;
+      font-weight: 950;
+      letter-spacing: -.08em;
+    }
+    .status {
+      color: var(--cyan2);
+      font-weight: 900;
+      font-size: 14px;
+    }
+    .notes-box {
+      min-height: 116px;
+      border: 1px solid rgba(135,185,255,.15);
+      border-radius: 18px;
+      background: rgba(255,255,255,.035);
+      padding: 14px;
+      color: rgba(244,248,255,.76);
+      font-size: 13px;
+      line-height: 1.7;
+      font-weight: 680;
+      margin-top: 14px;
+    }
+    .timeline {
+      margin-top: 14px;
+      height: 120px;
+      display:flex;
+      align-items:flex-end;
+      gap: 8px;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(135,185,255,.15);
+      background: rgba(255,255,255,.03);
+    }
+    .col {
+      flex: 1;
+      min-width: 10px;
+      border-radius: 8px 8px 0 0;
+      background: linear-gradient(180deg, #6df1ff, #357fff);
+      opacity: .88;
+    }
+
+    .workflow {
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 14px;
+    }
+    .step {
+      padding: 20px;
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      background: rgba(13,25,43,.72);
+    }
+    .step-num {
+      color: var(--cyan2);
+      font-weight: 950;
+      margin-bottom: 12px;
+    }
+    .step b { display:block; margin-bottom: 7px; }
+    .step p { margin:0; color:var(--muted); font-size: 13px; line-height:1.55; font-weight: 650; }
+
+    .contact-box {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+    .contact-panel {
+      border-radius: 30px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(13,25,43,.86), rgba(8,18,34,.88));
+      padding: 28px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.22);
+    }
+    .platform-pills {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 18px;
+    }
+    .platform-pill {
+      padding: 10px 13px;
+      border-radius: 999px;
+      border: 1px solid rgba(135,185,255,.18);
+      background: rgba(255,255,255,.04);
+      color: #dcecff;
+      font-weight: 900;
+      font-size: 13px;
+    }
+    .platform-pill.dim {
+      color: rgba(244,248,255,.62);
+      border-style: dashed;
+    }
+    .email-link {
+      color: var(--cyan2);
+      font-weight: 950;
+      text-decoration: none;
+    }
+    .email-link:hover { text-decoration: underline; }
+
+    .footer {
+      padding: 28px 0 42px;
+      color: rgba(244,248,255,.52);
+      font-size: 13px;
+      text-align:center;
+      border-top: 1px solid var(--line2);
+      margin-top: 36px;
+      font-weight: 650;
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid, .section-head, .features-layout, .preview-grid, .contact-box {
+        grid-template-columns: 1fr;
+      }
+      .feature-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .workflow { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .nav-inner { align-items:flex-start; padding: 14px 0; flex-direction: column; }
+      .nav-links { justify-content:flex-start; }
+    }
+    @media (max-width: 620px) {
+      .wrap { width: min(100% - 26px, 1180px); }
+      .hero { padding-top: 42px; }
+      .feature-grid, .workflow { grid-template-columns: 1fr; }
+      .kpis { grid-template-columns: 1fr; }
+      .bar-row { grid-template-columns: 94px 1fr 38px; }
+      .app-body { padding: 18px; }
+    }
+  
+    .demo-shell {
+      border: 1px solid var(--line);
+      border-radius: 34px;
+      background: linear-gradient(180deg, rgba(13,25,43,.88), rgba(8,18,34,.9));
+      box-shadow: 0 30px 90px rgba(0,0,0,.30);
+      overflow: hidden;
+    }
+    .demo-top {
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 18px;
+      border-bottom: 1px solid rgba(135,185,255,.13);
+      background: rgba(255,255,255,.045);
+    }
+    .demo-window-title {
+      margin-left: 8px;
+      color: rgba(244,248,255,.72);
+      font-weight: 950;
+      font-size: 14px;
+    }
+    .demo-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 14px 18px 0;
+      background: rgba(6,16,31,.42);
+    }
+    .demo-tab {
+      appearance: none;
+      border: 1px solid rgba(135,185,255,.18);
+      background: rgba(255,255,255,.035);
+      color: rgba(244,248,255,.78);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 950;
+      padding: 11px 15px;
+      border-radius: 14px 14px 0 0;
+      cursor: pointer;
+      transition: transform .18s ease, background .18s ease, color .18s ease, border-color .18s ease;
+    }
+    .demo-tab:hover {
+      transform: translateY(-1px);
+      color: var(--text);
+      background: rgba(71,163,255,.11);
+    }
+    .demo-tab.active {
+      color: #ffffff;
+      border-color: rgba(105,240,255,.38);
+      background: linear-gradient(180deg, rgba(71,163,255,.20), rgba(10,25,48,.88));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+    }
+    .demo-content {
+      padding: 22px;
+    }
+    .demo-panel {
+      display: none;
+      animation: fadeInPanel .24s ease both;
+    }
+    .demo-panel.active { display: block; }
+    @keyframes fadeInPanel {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .demo-panel-grid {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+    .demo-card {
+      border: 1px solid rgba(135,185,255,.16);
+      border-radius: 24px;
+      background: rgba(255,255,255,.035);
+      padding: 22px;
+      min-height: 100%;
+    }
+    .demo-card h3 {
+      margin: 0 0 8px;
+      font-size: 27px;
+      letter-spacing: -.04em;
+    }
+    .demo-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 14px;
+      font-weight: 680;
+    }
+    .demo-mini-note {
+      margin-top: 14px;
+      padding: 13px 14px;
+      border-radius: 17px;
+      border: 1px solid rgba(105,240,255,.18);
+      background: rgba(105,240,255,.065);
+      color: rgba(235,251,255,.86);
+      font-size: 13px;
+      line-height: 1.55;
+      font-weight: 760;
+    }
+    .demo-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .demo-stat {
+      border: 1px solid rgba(135,185,255,.15);
+      background: rgba(255,255,255,.035);
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .demo-stat b {
+      display: block;
+      font-size: 28px;
+      letter-spacing: -.05em;
+    }
+    .demo-stat span {
+      color: var(--soft);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .demo-table {
+      border: 1px solid rgba(135,185,255,.15);
+      border-radius: 18px;
+      overflow: hidden;
+      margin-top: 16px;
+      font-size: 13px;
+    }
+    .demo-table-row {
+      display: grid;
+      grid-template-columns: 1.25fr .62fr .62fr;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(135,185,255,.08);
+      color: rgba(244,248,255,.78);
+      font-weight: 760;
+    }
+    .demo-table-row:last-child { border-bottom: 0; }
+    .demo-table-row.head {
+      background: rgba(71,163,255,.10);
+      color: #aeefff;
+      font-weight: 950;
+    }
+    .demo-browser-row {
+      color: rgba(168,248,255,.82);
+    }
+    .demo-focus-time {
+      margin: 18px 0 14px;
+      font-size: clamp(64px, 9vw, 104px);
+      line-height: .88;
+      letter-spacing: -.09em;
+      font-weight: 950;
+    }
+    .demo-status {
+      color: var(--cyan2);
+      font-size: 14px;
+      font-weight: 950;
+      margin-bottom: 12px;
+    }
+    .demo-notes-area {
+      min-height: 160px;
+      border: 1px solid rgba(135,185,255,.15);
+      border-radius: 18px;
+      background: rgba(255,255,255,.035);
+      padding: 15px;
+      color: rgba(244,248,255,.78);
+      line-height: 1.75;
+      font-size: 14px;
+      font-weight: 680;
+      margin-top: 14px;
+    }
+    .demo-controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .demo-control {
+      padding: 8px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(135,185,255,.18);
+      background: rgba(71,163,255,.12);
+      color: #d8f7ff;
+      font-size: 12px;
+      font-weight: 950;
+    }
+    .demo-chart {
+      margin-top: 18px;
+      height: 190px;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      padding: 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(135,185,255,.15);
+      background: rgba(255,255,255,.03);
+    }
+    .demo-chart .col {
+      flex: 1;
+      min-width: 14px;
+      border-radius: 9px 9px 0 0;
+      background: linear-gradient(180deg, #75f2ff, #357fff);
+      opacity: .9;
+      position: relative;
+    }
+    .demo-chart .col::after {
+      content: attr(data-label);
+      position: absolute;
+      left: 50%;
+      bottom: -25px;
+      transform: translateX(-50%);
+      color: rgba(244,248,255,.58);
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    @media (max-width: 900px) {
+      .demo-panel-grid { grid-template-columns: 1fr; }
+      .demo-stat-grid { grid-template-columns: 1fr; }
+      .demo-content { padding: 14px; }
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <nav class="nav">
+      <div class="wrap nav-inner">
+        <a class="brand" href="#top" aria-label="TimeTrack home">
+          <span class="logo">👁</span>
+          <span>TimeTrack</span>
+        </a>
+        <div class="nav-links">
+          <a href="#features">Features</a>
+          <a href="#preview">Preview</a>
+          <a href="#how">How it works</a>
+          <a href="#contact">Contact</a>
+          <a class="btn" href="https://timetrack.gumroad.com/l/timetrack?wanted=true">Download for Windows</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="hero" id="top">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="eyebrow">TimeTrack v2.20 · Windows screen-time tracker</div>
+          <h1>See where your PC time <span class="grad">actually goes.</span></h1>
+          <p class="lead">TimeTrack gives you a clear picture of active screen time, app usage, browser activity, idle time, focus sessions, notes, categories, and reports — without turning your workflow into a complicated dashboard.</p>
+
+          <div class="hero-actions">
+            <a class="btn" href="https://timetrack.gumroad.com/l/timetrack?wanted=true">Download for Windows</a>
+            <a class="btn secondary" href="#preview">View app preview</a>
+            <span class="btn disabled" aria-disabled="true">macOS coming soon</span>
+          </div>
+
+          <div class="meta-row">
+            <span class="meta-pill">Local-first</span>
+            <span class="meta-pill">Idle time separated</span>
+            <span class="meta-pill">Focus + notes included</span>
+            <span class="meta-pill">Simple activation after purchase</span>
+          </div>
+        </div>
+
+        <div class="hero-card">
+          <div class="app-window">
+            <div class="window-bar">
+              <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+              <span class="window-name">Daily focus report</span>
+            </div>
+            <div class="app-body">
+              <div class="app-head">
+                <div class="app-icon">👁</div>
+                <div>
+                  <div class="app-title">Today overview</div>
+                  <div class="app-sub">Active time, idle time, tracked apps</div>
+                </div>
+              </div>
+
+              <div class="kpis">
+                <div class="kpi"><b>6h 12m</b><span>Total active time</span></div>
+                <div class="kpi"><b>42m</b><span>Idle separated</span></div>
+                <div class="kpi"><b>18</b><span>Apps tracked</span></div>
+              </div>
+
+              <div class="bar-list">
+                <div class="bar-row"><span>Study / work</span><div class="bar-track"><div class="bar-fill" style="width:78%"></div></div><b>78%</b></div>
+                <div class="bar-row"><span>Entertainment</span><div class="bar-track"><div class="bar-fill" style="width:52%"></div></div><b>52%</b></div>
+                <div class="bar-row"><span>Creativity</span><div class="bar-track"><div class="bar-fill" style="width:36%"></div></div><b>36%</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="section" id="features">
+        <div class="wrap">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Features</div>
+              <h2>Built around the way people actually use PCs.</h2>
+            </div>
+            <p class="section-lead">The point is not just “count time.” TimeTrack is built to explain where your time goes, separate real activity from away time, and give you enough control to correct categories when the app gets context wrong.</p>
+          </div>
+
+          <div class="features-layout">
+            <aside class="feature-intro">
+              <h3>What TimeTrack helps answer</h3>
+              <p>Where did my day go? Which apps took the most time? Was I actually active, or was the PC just left on? What part of my browser use was work, entertainment, or creative activity?</p>
+              <div class="mini-stack">
+                <span>Tracking base <small>Apps + browser</small></span>
+                <span>Accuracy logic <small>Idle excluded</small></span>
+                <span>Behaviour layer <small>Focus + notes</small></span>
+                <span>Review layer <small>Reports + timeline</small></span>
+              </div>
+            </aside>
+
+            <div class="feature-grid">
+              <article class="feature-card"><span class="feature-num">01</span><b>Active screen time</b><p>Tracks active PC use while keeping idle / away time separate from totals.</p></article>
+              <article class="feature-card"><span class="feature-num">02</span><b>App usage</b><p>Shows how long your main Windows apps are used across the day.</p></article>
+              <article class="feature-card"><span class="feature-num">03</span><b>Browser details</b><p>Breaks browser usage into page/window labels while hiding low-value clutter.</p></article>
+              <article class="feature-card"><span class="feature-num">04</span><b>Category rules</b><p>Set apps or browser labels as Productivity, Entertainment, Creativity, or Other.</p></article>
+              <article class="feature-card"><span class="feature-num">05</span><b>Reports</b><p>Daily, weekly, and monthly summaries with top app and timeline-style insight.</p></article>
+              <article class="feature-card"><span class="feature-num">06</span><b>Focus sessions</b><p>Run focus and break sessions inside the same app you use to review time.</p></article>
+              <article class="feature-card"><span class="feature-num">07</span><b>Notes tab</b><p>Save and reload notes for reflections, task context, or session tracking.</p></article>
+              <article class="feature-card"><span class="feature-num">08</span><b>Theme controls</b><p>Adjust dark/light mode and interface colours for a better personal setup.</p></article>
+              <article class="feature-card"><span class="feature-num">09</span><b>Simple activation</b><p>Install after purchase and follow the in-app activation flow.</p></article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      
+      <section class="section" id="preview">
+        <div class="wrap">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Interactive preview</div>
+              <h2>Click through a simplified TimeTrack window.</h2>
+            </div>
+            <p class="section-lead">This is a stylised mini-preview of the app tabs. It does not show every setting, but it gives buyers a clearer feel for how TimeTrack is structured before they download it.</p>
+          </div>
+
+          <div class="demo-shell" data-demo-tabs>
+            <div class="demo-top">
+              <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+              <span class="demo-window-title">TimeTrack preview · v2.20</span>
+            </div>
+
+            <div class="demo-tabs" role="tablist" aria-label="TimeTrack preview tabs">
+              <button class="demo-tab active" type="button" data-tab="today">Today</button>
+              <button class="demo-tab" type="button" data-tab="reports">Reports</button>
+              <button class="demo-tab" type="button" data-tab="focus">Focus</button>
+              <button class="demo-tab" type="button" data-tab="notes">Notes</button>
+            </div>
+
+            <div class="demo-content">
+              <section class="demo-panel active" data-panel="today">
+                <div class="demo-panel-grid">
+                  <div class="demo-card">
+                    <h3>Today dashboard</h3>
+                    <p>See active screen time, app usage, category split, and current tracking state in one place.</p>
+
+                    <div class="demo-stat-grid">
+                      <div class="demo-stat"><b>1h 13m</b><span>active today</span></div>
+                      <div class="demo-stat"><b>15m</b><span>idle threshold</span></div>
+                      <div class="demo-stat"><b>ON</b><span>tracking status</span></div>
+                    </div>
+
+                    <div class="bar-list">
+                      <div class="bar-row"><span>ChatGPT</span><div class="bar-track"><div class="bar-fill" style="width:86%"></div></div><b>30m</b></div>
+                      <div class="bar-row"><span>Chrome</span><div class="bar-track"><div class="bar-fill" style="width:63%"></div></div><b>21m</b></div>
+                      <div class="bar-row"><span>Explorer</span><div class="bar-track"><div class="bar-fill" style="width:30%"></div></div><b>10m</b></div>
+                    </div>
+                  </div>
+
+                  <div class="demo-card">
+                    <h3>Apps / software</h3>
+                    <p>Low-value rows can stay hidden until they pass your selected threshold, keeping the view cleaner.</p>
+                    <div class="demo-table">
+                      <div class="demo-table-row head"><span>App</span><span>Time</span><span>Share</span></div>
+                      <div class="demo-table-row"><span>ChatGPT</span><span>30m</span><span>41%</span></div>
+                      <div class="demo-table-row"><span>Google Chrome</span><span>21m</span><span>29%</span></div>
+                      <div class="demo-table-row"><span>File Explorer</span><span>10m</span><span>14%</span></div>
+                    </div>
+                    <div class="demo-mini-note">Idle time is separated from total active screen time, so leaving your PC on does not inflate the main total.</div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="demo-panel" data-panel="reports">
+                <div class="demo-panel-grid">
+                  <div class="demo-card">
+                    <h3>Reports timeline</h3>
+                    <p>Review usage across days, identify high-usage periods, and quickly see which app took the most time.</p>
+                    <div class="demo-stat-grid">
+                      <div class="demo-stat"><b>10h 58m</b><span>total in view</span></div>
+                      <div class="demo-stat"><b>3h 39m</b><span>active average</span></div>
+                      <div class="demo-stat"><b>ChatGPT</b><span>top app</span></div>
+                    </div>
+                    <div class="demo-chart">
+                      <span class="col" data-label="Mon" style="height:32%"></span>
+                      <span class="col" data-label="Tue" style="height:18%"></span>
+                      <span class="col" data-label="Wed" style="height:43%"></span>
+                      <span class="col" data-label="Thu" style="height:78%"></span>
+                      <span class="col" data-label="Fri" style="height:38%"></span>
+                      <span class="col" data-label="Sat" style="height:88%"></span>
+                      <span class="col" data-label="Sun" style="height:24%"></span>
+                    </div>
+                  </div>
+
+                  <div class="demo-card">
+                    <h3>Browser insight</h3>
+                    <p>When a browser is the top app, TimeTrack can surface useful page/window labels instead of only saying “Chrome”.</p>
+                    <div class="demo-table">
+                      <div class="demo-table-row head"><span>Browser detail</span><span>Time</span><span>Type</span></div>
+                      <div class="demo-table-row demo-browser-row"><span>Chrome · TimeTrack</span><span>18m</span><span>Work</span></div>
+                      <div class="demo-table-row demo-browser-row"><span>Chrome · Gumroad</span><span>12m</span><span>Work</span></div>
+                      <div class="demo-table-row demo-browser-row"><span>Chrome · Products</span><span>8m</span><span>Other</span></div>
+                    </div>
+                    <div class="demo-mini-note">Browser details appear after the selected minimum threshold, reducing clutter from tiny one-off page titles.</div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="demo-panel" data-panel="focus">
+                <div class="demo-panel-grid">
+                  <div class="demo-card">
+                    <h3>Focus session</h3>
+                    <p>Use short blocks to stay on task, then take a break. The timer is separate from tracking reports.</p>
+                    <div class="demo-status">Focus session running · Round 1 of 2</div>
+                    <div class="demo-focus-time">24:18</div>
+                    <div class="demo-controls">
+                      <span class="demo-control">Start</span>
+                      <span class="demo-control">Pause</span>
+                      <span class="demo-control">Break</span>
+                      <span class="demo-control">Sound optional</span>
+                    </div>
+                  </div>
+
+                  <div class="demo-card">
+                    <h3>Intentional sessions</h3>
+                    <p>Focus sessions are useful when you want to stop drifting between apps and measure deliberate work time.</p>
+                    <div class="notes-box">
+                      <b>Session plan</b><br>
+                      Finish one clear task.<br>
+                      Avoid switching apps until the block ends.<br>
+                      Use the break to reset before the next round.
+                    </div>
+                    <div class="demo-mini-note">Focus and break wording is shown clearly so users know which session is currently running.</div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="demo-panel" data-panel="notes">
+                <div class="demo-panel-grid">
+                  <div class="demo-card">
+                    <h3>Notes tab</h3>
+                    <p>Save quick notes inside TimeTrack and reload previous notes from your chosen notes folder.</p>
+                    <div class="notes-box">
+                      <b>Note title:</b> Product launch notes<br><br>
+                      Update Gumroad page.<br>
+                      Check licence approval workflow.<br>
+                      Test app timing for 10 minutes.<br>
+                      Review first user feedback.
+                    </div>
+                    <div class="demo-controls">
+                      <span class="demo-control">Save note</span>
+                      <span class="demo-control">Load note</span>
+                      <span class="demo-control">New note</span>
+                      <span class="demo-control">Change folder</span>
+                    </div>
+                  </div>
+
+                  <div class="demo-card">
+                    <h3>Local-first notes</h3>
+                    <p>Notes are saved locally on the PC, keeping the workflow simple and avoiding cloud account setup.</p>
+                    <div class="demo-table">
+                      <div class="demo-table-row head"><span>Saved note</span><span>Type</span><span>Status</span></div>
+                      <div class="demo-table-row"><span>Study plan</span><span>Note</span><span>Saved</span></div>
+                      <div class="demo-table-row"><span>Launch tasks</span><span>Note</span><span>Saved</span></div>
+                      <div class="demo-table-row"><span>Weekly review</span><span>Note</span><span>Saved</span></div>
+                    </div>
+                    <div class="demo-mini-note">The real app includes more detail; this preview keeps it clean for the website.</div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section class="section" id="how">
+        <div class="wrap">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">How it works</div>
+              <h2>Simple enough to start fast.</h2>
+            </div>
+            <p class="section-lead">TimeTrack is meant to be practical: install it, start tracking, review your patterns, and use focus/notes when you want more intentional sessions.</p>
+          </div>
+
+          <div class="workflow">
+            <div class="step"><div class="step-num">01</div><b>Install TimeTrack</b><p>Download the Windows installer package after purchase.</p></div>
+            <div class="step"><div class="step-num">02</div><b>Activate in-app</b><p>Follow the activation steps shown inside TimeTrack.</p></div>
+            <div class="step"><div class="step-num">03</div><b>Track your day</b><p>Start tracking active app/browser usage while idle time stays separate.</p></div>
+            <div class="step"><div class="step-num">04</div><b>Review patterns</b><p>Use Today, Reports, Focus, and Notes to understand your behaviour.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="contact">
+        <div class="wrap contact-box">
+          <div class="contact-panel">
+            <div class="eyebrow">Platform</div>
+            <h2>Windows first.</h2>
+            <p class="section-lead" style="margin-top:14px;">TimeTrack is currently built for Windows. A macOS version is being considered for a future release, but Windows is the current supported platform.</p>
+            <div class="platform-pills">
+              <span class="platform-pill">Windows available</span>
+              <span class="platform-pill dim">macOS coming soon</span>
+            </div>
+          </div>
+
+          <div class="contact-panel">
+            <div class="eyebrow">General enquiries</div>
+            <h2>Questions before buying?</h2>
+            <p class="section-lead" style="margin-top:14px;">For product questions before purchase, email <a class="email-link" href="mailto:timetrack2026@outlook.com">timetrack2026@outlook.com</a>.</p>
+            <p class="section-lead" style="font-size:15px;margin-top:14px;">Licence activation is handled after purchase through the in-app activation flow.</p>
+            <div class="hero-actions">
+              <a class="btn" href="https://timetrack.gumroad.com/l/timetrack?wanted=true">Download for Windows</a>
+              <span class="btn disabled">macOS coming soon</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap">© 2026 TimeTrack. Built for Windows users who want a clearer picture of their PC time.</div>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      const shell = document.querySelector('[data-demo-tabs]');
+      if (!shell) return;
+
+      const tabs = Array.from(shell.querySelectorAll('[data-tab]'));
+      const panels = Array.from(shell.querySelectorAll('[data-panel]'));
+
+      function activate(name) {
+        tabs.forEach(tab => {
+          const active = tab.dataset.tab === name;
+          tab.classList.toggle('active', active);
+          tab.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+
+        panels.forEach(panel => {
+          panel.classList.toggle('active', panel.dataset.panel === name);
+        });
+      }
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => activate(tab.dataset.tab));
+      });
+
+      activate('today');
+    })();
+  </script>
+
+</body>
+</html>
